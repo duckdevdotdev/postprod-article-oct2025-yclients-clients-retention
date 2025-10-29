@@ -11,46 +11,10 @@ import os
 from dataclasses import dataclass, field
 import requests
 
-resp = {
-  "success": True,
-  "data": [
-    {
-      "name": "Петров",
-      "id": 2,
-      "phone": "79101166438",
-      "last_visit_date": '2014-09-21T23:00:00.000+03:00'
-    },
-    {
-      "name": "Сидоров",
-      "id": 3,
-      "phone": "79101166438",
-      "last_visit_date": '2014-09-21T23:00:00.000+03:00'
-    },
-    {
-      "name": "Иванов",
-      "id": 1,
-      "phone": "79101166438",
-      "last_visit_date": '2014-09-21T23:00:00.000+03:00'
-    }
-  ],
-  "meta": {
-    "total_count": 908
-  }
-}
-
 
 class Filter:
     critical_date = "2025-01-01"
     filter: dict | None = None
-
-    '''field(default_factory=lambda:  {
-        "type": "last_visit_date",
-        "state":
-        {
-            "from": "2000-01-01",
-            "to": "2000-01-01"
-        }
-    })'''
 
     def update_filter(self):
         crit_date = datetime.today() - timedelta(days=5) + timedelta(days=25)
@@ -67,13 +31,10 @@ class Filter:
 
 
 filt = Filter()
-CID = 1568331
-ust = '8c99dac7720ab85ea80d74b59cd71c63'
-partn_tok = 'c8gnk5n4s4z44423zk96'
+CID = os.getenv('YCLIENT_ID')
+ust = os.getenv('USER_TOKEN')
+partn_tok = os.getenv('PARTNER_TOKEN')
 url = "https://api.yclients.com/api/v1/clients/{}".format(CID)
-'''api = YClientsAPI(token=partn_tok, company_id=CID, form_id=0)
-h = api.headers
-h['Authorization'] = f'Bearer {partn_tok}, User {ust}' '''
 h = {
     "Authorization": f"Bearer {partn_tok}, User {ust}",
     "Accept": "application/vnd.yclients.v2+json",
@@ -82,7 +43,6 @@ h = {
 querystring = {}
 querystring.update({"count": 10})
 querystring.update({"page": 1})
-# response = requests.get(url, headers=h, params=querystring)
 PER_PAGE = 100
 DAYS_NOT_VISITED = 100
 send_str = 'Приходите в ближайшие 7 дней и получите скидку 10% на любую услугу.'
@@ -183,7 +143,7 @@ def get_time(t_str: str):
 
 def get_time_range(recepient: str):
     payload = {'number': recepient}
-    r = requests.post(r'https://api.exolve.ru/hlr/v1/GetBestCallTime', headers={'Authorization': 'Bearer '+exolve_api_key}, data=json.dumps(payload))
+    r = requests.post(r'https://api.exolve.ru/hlr/v1/GetBestSmsTime', headers={'Authorization': 'Bearer '+exolve_api_key}, data=json.dumps(payload))
     print(r.text)
     if r.status_code == 200:
         ans = json.loads(r.text)
@@ -201,7 +161,7 @@ def get_multiple_hlr(clients: list[str]):
     data = '\n'.join(clients)
     st = str(base64.b64encode(data.encode())).replace("b'", '').replace("'", '')
     payload = {'numbers': st}
-    r = requests.post(r'https://api.exolve.ru/hlr/v1/GenerateBestCallTimeReport', headers={'Authorization': 'Bearer '+exolve_api_key}, data=json.dumps(payload))
+    r = requests.post(r'https://api.exolve.ru/hlr/v1/GenerateActivityScoreReport', headers={'Authorization': 'Bearer '+exolve_api_key}, data=json.dumps(payload))
     print(r.text)
 
     def get_times(t_str: str):
@@ -224,7 +184,6 @@ def get_multiple_hlr(clients: list[str]):
                 value='12:00:00,12:00:00')
             return my_data.map(get_times)
         time.sleep(10)
-
 
 
 def send_SMS(recepient: str):
